@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel = "stylesheet" href = "style.css">
+<script src = "https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.20/vue.min.js"> </script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.4"></script>
+<script src = "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.1/moment.min.js"> </script>
+<script src = "https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"> </script>
+<div id = "main">
+
+  <div class = "filters" style = "margin-bottom: 50px; margin-left: 50px; margin-top: 20px;">
+    <select class = "form-control" v-model="type" style = "width: 200px">
+        <option value = "All"> All </option>
+        <option v-for="ticket_type in ticket_types" value = {{ticket_type}}>
+          {{ticket_type}}
+        </option>
+    </select>
+
+    Draws higher than:$
+    <input type = "text" v-model="drawHigher | currencyFormatter" style = "width: 200px" class = "form-control"> </input>
+
+    <input type = "text" v-model="search" style = "width: 200px" class = "form-control"> </input>
+
+    <a style = "cursor: pointer;" v-on:click="clearFilters"> Clear Filters </a>
+  </div>
+
+  <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Type</th>
+      <th style = "cursor: pointer;" scope="col" v-on:click="reverse = reverse * -1">Best Draw:</th>
+      <th scope="col">Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="ticket in tickets | typeFilter | drawAmountFilter | sortByDraw | filterBy search">
+      <th scope="row">{{ticket.type}}</th>
+      <td>
+        ${{ bestDraw(ticket).hasOwnProperty('prize_pool') ? bestDraw(ticket).prize_pool.amount : ticket.draw.prize.value.amount | currencyFormatter }}
+      </td>
+
+      </td>
+      <td>{{ticket.name}}</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+</html>
+
+<script>
+
+//run with npm http-server
+
+new Vue({
+  el: "#main",
+
+  data: function(){
+    return {
+      tickets: [],
+      reverse: -1,
+      type: "All",
+      drawHigher: 10000,
+    }
+  },
+
+  filters: {
+
+    sortByDraw: function(tickets){
+
+      var bestDrawOfTicketA = 0;
+      var bestDrawOfTicketB = 0;
+
+      return tickets.slice().sort(function(ticketA,ticketB){
+        bestDrawOfTicketA = this.bestDraw(ticketA);
+        bestDrawOfTicketB = this.bestDraw(ticketB);
+
+        if(bestDrawOfTicketA.hasOwnProperty('prize_pool')){
+            bestDrawOfTicketA = parseFloat(bestDrawOfTicketA.prize_pool.amount);
+        }else{
+            bestDrawOfTicketA = parseFloat(bestDrawOfTicketA.prize.value.amount);
+        }
+        if(bestDrawOfTicketB.hasOwnProperty('prize_pool')){
+            bestDrawOfTicketB = parseFloat(bestDrawOfTicketB.prize_pool.amount);
+        }else{
+            bestDrawOfTicketB = parseFloat(bestDrawOfTicketB.prize.value.amount);
+        }
+
+        return (this.reverse === -1 ? bestDrawOfTicketB - bestDrawOfTicketA : bestDrawOfTicketA - bestDrawOfTicketB);
+      }.bind(this));
+
+    },
+
+    currencyFormatter: {
+
+      read: function(number){
+          return d3.format(",2f")(parseFloat(number));
+      },
+
+      write: function(num){
+        num = num.replace(/,/g, "");
+        if(isNaN(num) || num === ""){
+          num = 0;
+        }
+
+        return num;
+      }
+
+    },
+
+    drawAmountFilter: function(tickets){
+
+      if(isNaN(this.drawHigher) || this.drawHigher === ""){
+        return [];
+      }
+
+      var bestDraw = {};
+
+      return tickets.filter(function(ticket){
+        var bestDraw = this.bestDraw(ticket);
+
+        if(bestDraw.hasOwnProperty('prize_pool')){
+          return parseFloat(this.drawHigher) < bestDraw.prize_pool.amount;
+        }else{
+          return parseFloat(this.drawHigher) < bestDraw.prize.value.amount;
+        }
+
+      }.bind(this));
+
+    },
+
+    typeFilter: function(tickets){
+
+      if(this.type === "All"){
+        return tickets;
+      }
+
+      return tickets.filter(function(ticket){
+        return ticket.type === this.type;
+      }.bind(this));
+
+    }
+
+  },
+
+  computed: {
+
+    ticket_types: function(){
+
+      return Object.keys(d3.nest()
+        .key(function(d){
+          return d.type;
+        })
+        .map(this.tickets));
+
+    }
+
+  },
+
+  methods: {
+
+    clearFilters: function(){
+        this.drawHigher = 0;
+        this.search = "";
+        this.type = "All";
+    },
+
+    bestDraw: function(ticket){
+
+      if(!ticket.hasOwnProperty('draws')){
+        return ticket.draw;
+      }
+
+      var draws = ticket.draws;
+
+      return draws.slice().sort(function(a,b){
+        return parseFloat(a.prize_pool.amount) - parseFloat(b.prize_pool.amount);
+      })[0];
+
+    }
+
+  },
+
+  ready: function(){
+    this.$http.get("json/response.json").then(response =>{
+      this.tickets = response.body.result;
+    });
+  },
+
+})
+
+</script>
