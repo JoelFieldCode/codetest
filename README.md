@@ -1,40 +1,18 @@
-# codetest
-This project exists to serve as the server component of a code test. The project serves a HTTP json response from URL [http://localhost:8080](http://localhost:8080). The [response](json/response.json) will contain lotteries, game types and game offers.
+I didn't manage to set up the go/docker component (read bottom of readme for problems & my plan for if I was able to get the environment set up correctly). So anyway I decided to just complete the front-end component of the test. Setup steps assuming you already have node & npm installed:
 
-The json document is in the /json directory of this project.
+npm install http-server
 
-The project is written in golang. To build and run the example you will need to install [docker](https://docs.docker.com/engine/installation/).
+http-server -p 8080
 
-# Build
-Before you run the container you need to build the source code for the conainer.
+Visit http://localhost:8080
 
-## Container build
 
-Creates a statically linked binary for linux because docker runs under linux.
+go/docker environment config setup issues:
 
-```bash
- ./build.sh
-```
+I think my $GOPATH isn't configured correctly. I couldn't use the command "go run main.go" for debugging as it produced this permission error: "listen tcp :80: bind: permission denied". Couldn't run "go get -v" either as it complained about the $GOPATH.
 
-# Run
-The program runs in docker and exposes the service on port :8080 on localhost.
+Here is what I would have done had I got the go/docker config set up correctly (this plan could be incorrect as I haven't used go before):
 
-```bash
- ./run.sh
-```
-
-To access [http://localhost:8080](http://localhost:8080)
-
-# Development
-
-## Git 
-Add git hooks
-```bash
-ln -s `pwd`/hooks/pre-commit .git/hooks
-```
-
-## Local build
-
-```bash
-go get -v ./... && go build -v
-```
+- Get the baseHandler method to serve the HTML file (where my view logic would live)
+- Add another route that just serves the JSON which is accessible from "/getJSON" (full URL: http://localhost:8080/getJSON)
+- From there I could just AJAX request the JSON from the HTML page with the URL above.
