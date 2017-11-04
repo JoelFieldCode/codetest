@@ -8,7 +8,7 @@ npm install http-server -g
 
 http-server -p 8080
 
-Then go and visit http://localhost:8080
+Then go and visit http://localhost:8080 and you will see the Front-End. There is a table displaying the tickets with filters you can use to reduce/sort the ticket list.
 
 go/docker environment config setup issues:
 
