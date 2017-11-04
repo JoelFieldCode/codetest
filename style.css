@@ -1,0 +1,39 @@
+.inline-filter{
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.filters{
+  margin-bottom: 50px;
+  margin-top: 20px;
+}
+
+.ticket-header{
+  margin-left: auto;
+    margin-right: auto;
+    width: 200px;
+    margin-top: 20px;
+}
+
+.sort_header{
+  cursor: pointer;
+  color: #007bff;
+}
+
+.available_sort{
+  cursor: pointer;
+}
+.available_sort:hover{
+    color: #007bff;
+}
+
+@media(max-width: 600px){
+  .inline-filter{
+    margin-left: 15px;
+    display: block;
+    margin-top: 5px;
+  }
+  .filter_result_message{
+    margin-left: 15px;
+  }
+}
